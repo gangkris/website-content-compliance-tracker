@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
       'You compare an approved compliance version of website content against a draft pulled from a CMS. ' +
       'Identify meaningful differences that could affect regulatory compliance — wording changes, removed ' +
       'disclosures, altered claims, changed numbers or dates. Ignore purely cosmetic differences like ' +
-      'whitespace or formatting. If the draft matches the approved content, say so clearly. Be concise.',
+      'whitespace or formatting. Be concise.',
     messages: [
       {
         role: 'user',
@@ -31,12 +31,42 @@ export async function POST(req: NextRequest) {
           `CMS draft:\n"""\n${cmsDraft}\n"""`,
       },
     ],
+    tools: [
+      {
+        name: 'report_comparison',
+        description: 'Report the result of comparing the CMS draft against the approved content.',
+        input_schema: {
+          type: 'object',
+          properties: {
+            hasMeaningfulDifferences: {
+              type: 'boolean',
+              description:
+                'true if there are differences that could affect regulatory compliance (wording, claims, ' +
+                'disclosures, numbers, dates). false if the draft matches the approved content, ignoring ' +
+                'purely cosmetic differences like whitespace or formatting.',
+            },
+            findings: {
+              type: 'string',
+              description: 'Concise explanation of what was compared and what, if anything, differs.',
+            },
+          },
+          required: ['hasMeaningfulDifferences', 'findings'],
+        },
+      },
+    ],
+    tool_choice: { type: 'tool', name: 'report_comparison' },
   });
 
-  const findings = message.content
-    .filter((block) => block.type === 'text')
-    .map((block) => block.text)
-    .join('\n');
+  const toolUse = message.content.find((block) => block.type === 'tool_use');
 
-  return NextResponse.json({ findings });
+  if (!toolUse || toolUse.type !== 'tool_use') {
+    return NextResponse.json({ error: 'Claude did not return a comparison result' }, { status: 502 });
+  }
+
+  const { hasMeaningfulDifferences, findings } = toolUse.input as {
+    hasMeaningfulDifferences: boolean;
+    findings: string;
+  };
+
+  return NextResponse.json({ findings, hasMeaningfulDifferences });
 }

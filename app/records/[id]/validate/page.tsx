@@ -14,6 +14,7 @@ export default function ValidateChangesPage() {
   const [loading, setLoading] = useState(true);
   const [cmsDraft, setCmsDraft] = useState('');
   const [findings, setFindings] = useState<string | null>(null);
+  const [hasMeaningfulDifferences, setHasMeaningfulDifferences] = useState<boolean | null>(null);
   const [running, setRunning] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -35,6 +36,7 @@ export default function ValidateChangesPage() {
     setRunning(true);
     setError(null);
     setFindings(null);
+    setHasMeaningfulDifferences(null);
 
     try {
       const res = await fetch('/api/validate', {
@@ -48,6 +50,7 @@ export default function ValidateChangesPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Validation failed');
       setFindings(data.findings);
+      setHasMeaningfulDifferences(data.hasMeaningfulDifferences);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Validation failed');
     } finally {
@@ -62,6 +65,14 @@ export default function ValidateChangesPage() {
       setError(
         'This record still needs reapproval and cannot be published as-is. ' +
           'Use Update record to enter the new approval number and an extended expiration date first.'
+      );
+      return;
+    }
+
+    if (hasMeaningfulDifferences) {
+      setError(
+        'The CMS draft does not match the approved content. Fix the draft in the CMS and run validation ' +
+          'again before publishing.'
       );
       return;
     }
@@ -143,7 +154,18 @@ export default function ValidateChangesPage() {
       {findings !== null && (
         <div>
           <h2 className="text-sm font-medium text-gray-500 mb-2">Claude&apos;s findings</h2>
-          <div className="border rounded p-4 text-sm whitespace-pre-wrap">{findings}</div>
+          <div
+            className={`border rounded p-4 text-sm whitespace-pre-wrap ${
+              hasMeaningfulDifferences ? 'border-red-300 bg-red-50' : 'border-green-300 bg-green-50'
+            }`}
+          >
+            {findings}
+          </div>
+          {hasMeaningfulDifferences && (
+            <p className="text-red-600 text-sm mt-2">
+              Differences found — fix the CMS draft and run validation again before you can publish.
+            </p>
+          )}
         </div>
       )}
 
@@ -153,7 +175,9 @@ export default function ValidateChangesPage() {
         </Link>
         <button
           onClick={saveAndPublish}
-          disabled={findings === null || publishing || record.status === 'Needs reapproval'}
+          disabled={
+            findings === null || publishing || record.status === 'Needs reapproval' || hasMeaningfulDifferences === true
+          }
           className="px-4 py-2 rounded bg-green-700 text-white disabled:opacity-50"
         >
           {publishing ? 'Publishing…' : 'Save and publish'}
