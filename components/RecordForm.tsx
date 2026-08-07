@@ -24,8 +24,19 @@ export default function RecordForm({ record }: Props) {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setSaving(true);
     setError(null);
+
+    if (isUpdate && record!.status === 'Needs reapproval') {
+      if (!expirationDate || record!.expiration_date === null || expirationDate <= record!.expiration_date) {
+        setError(
+          'This record needs reapproval because it expired or is expiring soon. ' +
+            'Enter a new expiration date later than the current one to confirm it was actually reapproved.'
+        );
+        return;
+      }
+    }
+
+    setSaving(true);
 
     const payload = {
       title,
