@@ -57,6 +57,15 @@ export default function ValidateChangesPage() {
 
   async function saveAndPublish() {
     if (!record || findings === null) return;
+
+    if (record.status === 'Needs reapproval') {
+      setError(
+        'This record still needs reapproval and cannot be published as-is. ' +
+          'Use Update record to enter the new approval number and an extended expiration date first.'
+      );
+      return;
+    }
+
     setPublishing(true);
     setError(null);
 
@@ -121,6 +130,16 @@ export default function ValidateChangesPage() {
 
       {error && <p className="text-red-600 text-sm">{error}</p>}
 
+      {record.status === 'Needs reapproval' && (
+        <p className="text-amber-700 text-sm">
+          This record needs reapproval. Use{' '}
+          <Link href={`/records/${record.id}/edit`} className="underline">
+            Update record
+          </Link>{' '}
+          to enter a new approval number and an extended expiration date before publishing.
+        </p>
+      )}
+
       {findings !== null && (
         <div>
           <h2 className="text-sm font-medium text-gray-500 mb-2">Claude&apos;s findings</h2>
@@ -134,7 +153,7 @@ export default function ValidateChangesPage() {
         </Link>
         <button
           onClick={saveAndPublish}
-          disabled={findings === null || publishing}
+          disabled={findings === null || publishing || record.status === 'Needs reapproval'}
           className="px-4 py-2 rounded bg-green-700 text-white disabled:opacity-50"
         >
           {publishing ? 'Publishing…' : 'Save and publish'}
