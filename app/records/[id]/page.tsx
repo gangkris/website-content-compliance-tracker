@@ -73,14 +73,12 @@ export default function RecordDetailsPage() {
         >
           Validate changes
         </Link>
-        {record.status === 'Needs reapproval' && (
-          <Link
-            href={`/records/${record.id}/edit`}
-            className="px-4 py-2 rounded border"
-          >
-            Update record
-          </Link>
-        )}
+        <Link
+          href={`/records/${record.id}/edit`}
+          className="px-4 py-2 rounded border"
+        >
+          Update record
+        </Link>
       </div>
     </main>
   );
