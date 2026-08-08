@@ -23,12 +23,13 @@ export default function EditRecordPage() {
       });
   }, [id]);
 
-  if (loading) return <main className="max-w-4xl mx-auto p-8">Loading…</main>;
-  if (!record) return <main className="max-w-4xl mx-auto p-8">Record not found.</main>;
+  const mainStyle = { maxWidth: 1120, width: '100%', margin: '0 auto', padding: '32px 24px', flex: 1 } as const;
+
+  if (loading) return <main style={mainStyle}>Loading…</main>;
+  if (!record) return <main style={mainStyle}>Record not found.</main>;
 
   return (
-    <main className="max-w-4xl mx-auto p-8 w-full">
-      <h1 className="text-2xl font-semibold mb-6">Update compliance record</h1>
+    <main style={mainStyle}>
       <RecordForm record={record} />
     </main>
   );

@@ -6,6 +6,8 @@ import { useParams, useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { ComplianceRecord } from '@/lib/types';
 
+const mainStyle = { maxWidth: 1120, width: '100%', margin: '0 auto', padding: '32px 24px', flex: 1 } as const;
+
 export default function ValidateChangesPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
@@ -100,88 +102,105 @@ export default function ValidateChangesPage() {
     router.push(`/records/${record.id}`);
   }
 
-  if (loading) return <main className="max-w-4xl mx-auto p-8">Loading…</main>;
-  if (!record) return <main className="max-w-4xl mx-auto p-8">Record not found.</main>;
+  if (loading) return <main style={mainStyle}>Loading…</main>;
+  if (!record) return <main style={mainStyle}>Record not found.</main>;
+
+  const hasRun = findings !== null;
 
   return (
-    <main className="max-w-4xl mx-auto p-8 w-full flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-semibold">{record.title}</h1>
-        <p className="text-gray-500 text-sm">
-          Current approval number: {record.approval_number ?? '—'}
-        </p>
+    <main style={mainStyle}>
+      <h1 style={{ margin: 0 }}>{record.title}</h1>
+      <p className="text-muted" style={{ margin: '4px 0 16px', fontSize: 14 }}>
+        Approval {record.approval_number ?? '—'} · Validate changes before publishing
+      </p>
+      <hr className="hr" style={{ margin: '0 0 24px' }} />
+
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
+        <div>
+          <h5 style={{ margin: '0 0 8px' }}>
+            Approved content <span className="text-muted" style={{ textTransform: 'none', letterSpacing: 0 }}>(read-only)</span>
+          </h5>
+          <div className="card elev-sm" style={{ whiteSpace: 'pre-wrap', fontSize: 13, lineHeight: 1.6, maxHeight: 320, overflow: 'auto' }}>
+            {record.approved_content || '—'}
+          </div>
+        </div>
+        <div className="field" style={{ margin: 0 }}>
+          <label style={{ fontSize: 16, fontFamily: 'var(--font-heading)', fontWeight: 800, color: 'var(--color-text)', marginBottom: 8 }}>
+            CMS draft
+          </label>
+          <textarea
+            className="input"
+            style={{ minHeight: 280, fontSize: 13 }}
+            value={cmsDraft}
+            onChange={(e) => setCmsDraft(e.target.value)}
+            placeholder="Paste the current CMS draft here…"
+          />
+        </div>
       </div>
 
-      <div>
-        <h2 className="text-sm font-medium text-gray-500 mb-2">Approved content (reference)</h2>
-        <pre className="whitespace-pre-wrap border rounded p-4 bg-gray-50 text-sm">
-          {record.approved_content || '—'}
-        </pre>
-      </div>
-
-      <label className="flex flex-col gap-1">
-        <span className="text-sm font-medium">CMS draft</span>
-        <textarea
-          className="border rounded px-3 py-2 min-h-40"
-          value={cmsDraft}
-          onChange={(e) => setCmsDraft(e.target.value)}
-          placeholder="Paste the current CMS draft content here"
-        />
-      </label>
-
-      <div>
+      <div style={{ marginTop: 16 }}>
         <button
           onClick={runValidation}
           disabled={running || !cmsDraft}
-          className="px-4 py-2 rounded bg-black text-white disabled:opacity-50"
+          className="btn btn-primary"
+          style={{ whiteSpace: 'nowrap' }}
         >
           {running ? 'Running validation…' : 'Run validation'}
         </button>
       </div>
 
-      {error && <p className="text-red-600 text-sm">{error}</p>}
+      {error && <p style={{ color: 'var(--color-danger)', fontSize: 14, marginTop: 16 }}>{error}</p>}
 
       {record.status === 'Needs reapproval' && (
-        <p className="text-amber-700 text-sm">
+        <p style={{ color: 'var(--color-accent-700)', fontSize: 14, marginTop: 16 }}>
           This record needs reapproval. Use{' '}
-          <Link href={`/records/${record.id}/edit`} className="underline">
-            Update record
-          </Link>{' '}
+          <Link href={`/records/${record.id}/edit`}>Update record</Link>{' '}
           to enter a new approval number and an extended expiration date before publishing.
         </p>
       )}
 
-      {findings !== null && (
-        <div>
-          <h2 className="text-sm font-medium text-gray-500 mb-2">Claude&apos;s findings</h2>
+      {hasRun && (
+        <div style={{ marginTop: 24 }}>
           <div
-            className={`border rounded p-4 text-sm whitespace-pre-wrap ${
-              hasMeaningfulDifferences ? 'border-red-300 bg-red-50' : 'border-green-300 bg-green-50'
-            }`}
+            className={`tag ${hasMeaningfulDifferences ? 'tag-accent' : 'tag-neutral'}`}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '8px 16px', fontFamily: 'var(--font-heading)', fontWeight: 800, fontSize: 14, marginBottom: 16 }}
           >
-            {findings}
+            {hasMeaningfulDifferences ? (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 9v4" />
+                <path d="M12 17h.01" />
+                <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L14.71 3.86a2 2 0 00-3.42 0z" />
+              </svg>
+            ) : (
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            )}
+            {hasMeaningfulDifferences ? 'Differences found' : 'Matches approved content'}
           </div>
-          {hasMeaningfulDifferences && (
-            <p className="text-red-600 text-sm mt-2">
-              Differences found — fix the CMS draft and run validation again before you can publish.
-            </p>
-          )}
+          <div>
+            <h6 style={{ margin: '0 0 8px' }}>Claude&apos;s findings</h6>
+            <div className="card" style={{ display: 'block', fontSize: 13, lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>
+              {findings}
+            </div>
+          </div>
         </div>
       )}
 
-      <div className="flex gap-3">
-        <Link href={`/records/${record.id}`} className="px-4 py-2 rounded border">
-          Back to record
-        </Link>
+      <div style={{ display: 'flex', gap: 8, marginTop: 24 }}>
         <button
           onClick={saveAndPublish}
           disabled={
             findings === null || publishing || record.status === 'Needs reapproval' || hasMeaningfulDifferences === true
           }
-          className="px-4 py-2 rounded bg-green-700 text-white disabled:opacity-50"
+          className="btn btn-primary"
+          style={{ whiteSpace: 'nowrap' }}
         >
           {publishing ? 'Publishing…' : 'Save and publish'}
         </button>
+        <Link href={`/records/${record.id}`} className="btn btn-secondary" style={{ whiteSpace: 'nowrap' }}>
+          Back to record
+        </Link>
       </div>
     </main>
   );
