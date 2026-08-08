@@ -24,7 +24,7 @@ export default function DashboardPage() {
   return (
     <main className="max-w-4xl mx-auto p-8 w-full">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-semibold">Compliance Content Approval</h1>
+        <h1 className="text-2xl font-semibold">Content Compliance Tracker</h1>
         <Link href="/records/new" className="px-4 py-2 rounded bg-black text-white">
           + New record
         </Link>

@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Compliance Content Approval",
+  title: "Content Compliance Tracker",
   description: "Compliance content approval tracker",
 };
 
