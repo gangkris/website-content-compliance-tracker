@@ -25,14 +25,15 @@ export default function DashboardPage() {
   return (
     <main style={{ maxWidth: 1120, width: '100%', margin: '0 auto', padding: '32px 24px', flex: 1 }}>
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 4 }}>
-        <h1 style={{ margin: 0 }}>Compliance records</h1>
+        <h1 style={{ margin: 0 }}>Content records</h1>
         <span className="text-muted" style={{ fontSize: 13 }}>
           {loading ? '' : `${records.length} ${records.length === 1 ? 'record' : 'records'}`}
         </span>
       </div>
       <p className="text-muted" style={{ margin: '0 0 16px', fontSize: 14, maxWidth: 640 }}>
-        Log content once it's approved for compliance, validate it against what's actually live before
-        publishing, and get flagged automatically when an approval is about to expire.
+        Log content once it&apos;s approved by compliance, validate it against what&apos;s actually live
+        before publishing, and get flagged automatically when an approval is about to expire before
+        30 days.
       </p>
       <hr className="hr" style={{ margin: '0 0 24px' }} />
 
