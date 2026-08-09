@@ -27,27 +27,36 @@ expire.
 4. **Record details** — everything about one piece of content: its approval info, the
    approved text, the result of the last check, and buttons to validate or update it.
 
-## The two moving parts: one automatic, one you trigger
+## Scheduled vs. on-demand
 
-- **Automatic, runs on its own every day**: the app checks every record's expiration
-  date, and if one is coming up within 30 days (or has already passed), it automatically
-  marks that record as needing reapproval. Nobody has to remember to check — it just
-  happens.
-- **You trigger it yourself**: the "Run validation" button on the Validate Changes
-  screen. You paste in the current draft, and the app compares it against the approved
-  version and tells you whether they still match.
+Every piece of the app falls into one of two buckets: things that happen on their own,
+and things a person has to actually do.
 
-Publishing is also something you do yourself, but it's not allowed to go through if the
-record still needs reapproval, or if the last check found a real difference — the app
-won't let something get published if it hasn't actually been checked and cleared.
+- **Scheduled** (runs on its own, once a day, nobody has to remember): the app checks
+  every record's expiration date, and if one is coming up within 30 days — or has
+  already passed — it automatically marks that record as needing reapproval.
+- **On-demand** (a person has to click something): everything else. Logging a newly
+  approved piece of content, updating a record once it's been reapproved, and running
+  a check on a draft before publishing are all things a person deliberately triggers,
+  not things that happen in the background.
 
-## How the comparison actually works
+Publishing itself is also on-demand, but it's not allowed to go through if the record
+still needs reapproval, or if the last check found a real difference — the app won't
+let something get published if it hasn't actually been checked and cleared first.
 
-The "Run validation" step doesn't use a simple find-the-differences trick. It sends both
-the approved text and the current draft to Claude (Anthropic's AI) and asks it to judge
-whether anything meaningfully changed — things like a different price, a missing
-disclaimer, or an altered claim — while ignoring things that don't matter, like extra
-spacing. Claude then explains what it found in plain language.
+## The agentic piece: how the comparison actually works
+
+Most of the on-demand actions above — adding a record, updating one, publishing — are
+just straightforward data entry: what you type in is what gets saved, no judgment
+involved. The one exception, and the one place in the app where a real judgment call is
+handed off to AI rather than decided by a fixed rule, is "Run validation" on the
+Validate Changes screen.
+
+Instead of a simple find-the-differences trick, that step sends both the approved text
+and the current draft to Claude (Anthropic's AI) and asks it to judge whether anything
+meaningfully changed — things like a different price, a missing disclaimer, or an
+altered claim — while ignoring things that don't matter, like extra spacing. Claude then
+explains what it found in plain language.
 
 This was built this way on purpose: deciding whether a wording change actually matters
 for compliance isn't something a fixed rule can do well — it takes actual judgment,
