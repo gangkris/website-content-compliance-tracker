@@ -16,6 +16,7 @@ export default function RecordForm({ record }: Props) {
 
   const [title, setTitle] = useState(record?.title ?? '');
   const [owner, setOwner] = useState(record?.owner ?? '');
+  const [ownerEmail, setOwnerEmail] = useState(record?.owner_email ?? '');
   const [approvalNumber, setApprovalNumber] = useState(record?.approval_number ?? '');
   const [approvalDate, setApprovalDate] = useState(record?.approval_date ?? '');
   const [expirationDate, setExpirationDate] = useState(record?.expiration_date ?? '');
@@ -56,6 +57,7 @@ export default function RecordForm({ record }: Props) {
     const payload = {
       title,
       owner,
+      owner_email: ownerEmail || null,
       approval_number: approvalNumber || null,
       approval_date: approvalDate || null,
       expiration_date: expirationDate || null,
@@ -110,6 +112,17 @@ export default function RecordForm({ record }: Props) {
           <div className="field">
             <label>Owner</label>
             <input className="input" value={owner} onChange={(e) => setOwner(e.target.value)} placeholder="Name" />
+          </div>
+
+          <div className="field">
+            <label>Owner email</label>
+            <input
+              type="email"
+              className="input"
+              value={ownerEmail}
+              onChange={(e) => setOwnerEmail(e.target.value)}
+              placeholder="name@company.com"
+            />
           </div>
 
           <div className="field">

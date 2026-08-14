@@ -19,6 +19,12 @@ export function fmtValidatedAt(iso: string | null): string {
   return 'Validated ' + d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
+export function fmtReminderSentAt(iso: string | null): string | null {
+  if (!iso) return null;
+  const d = new Date(iso);
+  return 'Last reminder sent ' + d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
 export function expirationStyle(iso: string | null): { color: string; fontWeight: number } {
   if (!iso) return { color: 'var(--color-text)', fontWeight: 400 };
   const soon = daysUntil(iso) <= EXPIRING_SOON_DAYS;

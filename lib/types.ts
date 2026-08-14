@@ -12,4 +12,7 @@ export interface ComplianceRecord {
   last_published_date: string | null;
   last_validated_at: string | null;
   last_validation_outcome: string | null;
+  owner_email: string | null;
+  last_reminder_text: string | null;
+  reminder_sent_at: string | null;
 }

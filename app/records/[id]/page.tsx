@@ -6,7 +6,7 @@ import { useParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { ComplianceRecord } from '@/lib/types';
 import StatusBadge from '@/components/StatusBadge';
-import { fmtDate, fmtValidatedAt, expirationStyle } from '@/lib/format';
+import { fmtDate, fmtValidatedAt, fmtReminderSentAt, expirationStyle } from '@/lib/format';
 
 const mainStyle = { maxWidth: 1120, width: '100%', margin: '0 auto', padding: '32px 24px', flex: 1 } as const;
 
@@ -45,6 +45,12 @@ export default function RecordDetailsPage() {
         <span>Approved {fmtDate(record.approval_date)}</span>
         <span>·</span>
         <span style={expirationStyle(record.expiration_date)}>Expires {fmtDate(record.expiration_date)}</span>
+        {record.reminder_sent_at && (
+          <>
+            <span>·</span>
+            <span>{fmtReminderSentAt(record.reminder_sent_at)}</span>
+          </>
+        )}
       </div>
       <hr className="hr" style={{ margin: '0 0 24px' }} />
 
