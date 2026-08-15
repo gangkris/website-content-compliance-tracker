@@ -65,16 +65,21 @@ which is exactly what was handed off to Claude here.
 
 ## Automated reminder emails
 
-When the scheduled check flags a record as needing reapproval, it also sends the
-content owner a reminder email — fully on its own, with no person reviewing or
-approving the email before it goes out. Since nobody's checking each one before it
-sends, the email is deliberately kept narrow in two ways:
+When the scheduled check flags a record as needing reapproval, it also sends a reminder
+email to one shared compliance inbox (`TEAM_LEAD_EMAIL`) — fully on its own, with no
+person reviewing or approving the email before it goes out. Records still track an
+individual owner and owner email (shown on Record Details), but reminders route to the
+one central inbox rather than pinging each content owner directly — one person owns the
+reapproval queue, and the email names the record's owner so they know who to follow up
+with. Since nobody's checking each one before it sends, the email is deliberately kept
+narrow in two ways:
 
 - **What Claude sees**: only compliance facts — the title, approval number, expiration
   date, and the result of the last check. It never sees who the owner is, so nothing
   about the person can influence what gets written. Claude's only job is to draft one
   short, plain-language sentence explaining why the record needs attention; the rest of
-  the email is a fixed template with that sentence dropped in.
+  the email is a fixed template — including the owner's name — with that sentence
+  dropped in.
 - **What the email can do**: nothing. It states what's true and links to the record so
   the owner can look at it, but there's no "click here to reapprove" link or anything
   else that would change the record's status from inside the email. Any real action —
