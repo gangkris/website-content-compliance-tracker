@@ -14,6 +14,10 @@ export default function RecordDetailsPage() {
   const { id } = useParams<{ id: string }>();
   const [record, setRecord] = useState<ComplianceRecord | null>(null);
   const [loading, setLoading] = useState(true);
+  const [editedContent, setEditedContent] = useState('');
+  const [savingContent, setSavingContent] = useState(false);
+  const [contentSaved, setContentSaved] = useState(false);
+  const [contentError, setContentError] = useState<string | null>(null);
 
   useEffect(() => {
     supabase
@@ -23,12 +27,37 @@ export default function RecordDetailsPage() {
       .single()
       .then(({ data }) => {
         setRecord(data);
+        setEditedContent(data?.approved_content ?? '');
         setLoading(false);
       });
   }, [id]);
 
+  async function saveApprovedContent() {
+    if (!record) return;
+    setSavingContent(true);
+    setContentError(null);
+    setContentSaved(false);
+
+    const { error } = await supabase
+      .from('compliance_records')
+      .update({ approved_content: editedContent || null })
+      .eq('id', record.id);
+
+    setSavingContent(false);
+
+    if (error) {
+      setContentError(error.message);
+      return;
+    }
+
+    setRecord({ ...record, approved_content: editedContent || null });
+    setContentSaved(true);
+  }
+
   if (loading) return <main style={mainStyle}>Loading…</main>;
   if (!record) return <main style={mainStyle}>Record not found.</main>;
+
+  const isNeedsReapproval = record.status === 'Needs reapproval';
 
   return (
     <main style={mainStyle}>
@@ -57,9 +86,42 @@ export default function RecordDetailsPage() {
       <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 32 }}>
         <div>
           <h5 style={{ margin: '0 0 8px' }}>Approved content</h5>
-          <div className="card elev-sm" style={{ whiteSpace: 'pre-wrap', fontSize: 13, lineHeight: 1.6 }}>
-            {record.approved_content || '—'}
-          </div>
+          {isNeedsReapproval ? (
+            <>
+              <p className="text-muted" style={{ fontSize: 12, margin: '0 0 8px' }}>
+                This record needs reapproval — capture the most recently approved text here. Saving this
+                doesn&apos;t clear Needs reapproval on its own; use Update record for that once you also have
+                the new approval number and expiration date.
+              </p>
+              <textarea
+                className="input"
+                style={{ minHeight: 200, fontSize: 13, lineHeight: 1.6 }}
+                value={editedContent}
+                onChange={(e) => {
+                  setEditedContent(e.target.value);
+                  setContentSaved(false);
+                }}
+              />
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 8 }}>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={saveApprovedContent}
+                  disabled={savingContent}
+                >
+                  {savingContent ? 'Saving…' : 'Save content'}
+                </button>
+                {contentSaved && <span className="text-muted" style={{ fontSize: 12 }}>Saved.</span>}
+              </div>
+              {contentError && (
+                <p style={{ color: 'var(--color-danger)', fontSize: 13, marginTop: 8 }}>{contentError}</p>
+              )}
+            </>
+          ) : (
+            <div className="card elev-sm" style={{ whiteSpace: 'pre-wrap', fontSize: 13, lineHeight: 1.6 }}>
+              {record.approved_content || '—'}
+            </div>
+          )}
         </div>
 
         <div>
