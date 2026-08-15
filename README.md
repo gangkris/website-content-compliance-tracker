@@ -34,7 +34,8 @@ and things a person has to actually do.
 
 - **Scheduled** (runs on its own, once a day, nobody has to remember): the app checks
   every record's expiration date, and if one is coming up within 30 days — or has
-  already passed — it automatically marks that record as needing reapproval.
+  already passed — it automatically marks that record as needing reapproval, and sends
+  the owner a reminder email (more on that below).
 - **On-demand** (a person has to click something): everything else. Logging a newly
   approved piece of content, updating a record once it's been reapproved, and running
   a check on a draft before publishing are all things a person deliberately triggers,
@@ -62,11 +63,32 @@ This was built this way on purpose: deciding whether a wording change actually m
 for compliance isn't something a fixed rule can do well — it takes actual judgment,
 which is exactly what was handed off to Claude here.
 
+## Automated reminder emails
+
+When the scheduled check flags a record as needing reapproval, it also sends the
+content owner a reminder email — fully on its own, with no person reviewing or
+approving the email before it goes out. Since nobody's checking each one before it
+sends, the email is deliberately kept narrow in two ways:
+
+- **What Claude sees**: only compliance facts — the title, approval number, expiration
+  date, and the result of the last check. It never sees who the owner is, so nothing
+  about the person can influence what gets written. Claude's only job is to draft one
+  short, plain-language sentence explaining why the record needs attention; the rest of
+  the email is a fixed template with that sentence dropped in.
+- **What the email can do**: nothing. It states what's true and links to the record so
+  the owner can look at it, but there's no "click here to reapprove" link or anything
+  else that would change the record's status from inside the email. Any real action —
+  updating the record, publishing it — still has to happen by actually opening the app,
+  against whatever the record's real status is at that moment. That's what keeps sending
+  an email automatically, without a human checking each one first, a reasonable thing to
+  do here: the email can inform, but it can't act.
+
 ## What's stored
 
-Each tracked piece of content has: a title, an owner, an approval number, an approval
-date, an expiration date, the approved text itself, a status (awaiting review,
-published, or needs reapproval), and the result of the most recent check. All of this
+Each tracked piece of content has: a title, an owner (name and email), an approval
+number, an approval date, an expiration date, the approved text itself, a status
+(awaiting review, published, or needs reapproval), the result of the most recent check,
+and the text and timestamp of the most recent reminder email sent for it. All of this
 lives in a real database (Supabase), not hardcoded anywhere in the app — every screen
 reads and writes to it directly.
 
@@ -78,12 +100,13 @@ cp .env.example .env.local   # fill in your own keys
 npm run dev
 ```
 
-You'll need your own Supabase project and Anthropic API key — see `.env.example` for
-which values go where. None of these keys are ever written directly into the code; the
-app always reads them from environment variables, and the more sensitive ones (the
-database's admin key and the Anthropic key) are only ever used on the server side, never
-sent to anyone's browser.
+You'll need your own Supabase project, Anthropic API key, and Resend API key (for the
+reminder emails) — see `.env.example` for which values go where. None of these keys are
+ever written directly into the code; the app always reads them from environment
+variables, and the more sensitive ones (the database's admin key, the Anthropic key, and
+the Resend key) are only ever used on the server side, never sent to anyone's browser.
 
 ## Built with
 
-Next.js, Supabase (database), and the Anthropic API, deployed on Vercel.
+Next.js, Supabase (database), the Anthropic API, and Resend (email), deployed on
+Vercel.
