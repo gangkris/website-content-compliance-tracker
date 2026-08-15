@@ -38,7 +38,7 @@ export default function RecordDetailsPage() {
       </div>
 
       <div className="text-muted" style={{ fontSize: 13, display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 24 }}>
-        <span>{record.owner}</span>
+        <span>{record.owner}{record.owner_email ? ` (${record.owner_email})` : ''}</span>
         <span>·</span>
         <span>Approval {record.approval_number ?? '—'}</span>
         <span>·</span>
