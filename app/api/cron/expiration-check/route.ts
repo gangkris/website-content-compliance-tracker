@@ -8,11 +8,15 @@ import { supabaseAdmin } from '@/lib/supabaseAdmin';
 // automated counterpart to the on-demand Validate Changes route.
 //
 // It also sends a fully autonomous reminder email (no human approval before
-// send) to the owner of each record that transitions to Needs reapproval in
-// this run. Two deliberate constraints keep that safe:
+// send) to a single compliance team-lead inbox for each record that
+// transitions to Needs reapproval in this run — one central inbox owns the
+// reapproval queue, rather than pinging each content owner individually.
+// Two deliberate constraints keep the autonomy safe:
 //   1. Claude only ever sees compliance metadata (title, approval number,
-//      expiration date, last validation outcome) — never the owner's name or
-//      email — so nothing about who the person is can shape the message.
+//      expiration date, last validation outcome) — never the record owner's
+//      name or email — so nothing about who that person is can shape the
+//      message. The owner's name is still included in the fixed template
+//      (not AI-generated) so the team lead knows who to follow up with.
 //   2. The email is strictly read-only: it states what's true and links to
 //      the record for viewing, but contains no link or action that changes
 //      anything. Any real action still has to happen inside the app, against
@@ -24,10 +28,10 @@ const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 type TransitionedRecord = {
   id: string;
   title: string;
+  owner: string;
   approval_number: string | null;
   expiration_date: string | null;
   last_validation_outcome: string | null;
-  owner_email: string | null;
 };
 
 async function draftReminderSentence(record: TransitionedRecord): Promise<string> {
@@ -63,7 +67,7 @@ function buildReminderEmail(record: TransitionedRecord, sentence: string, appUrl
   const subject = `Reapproval needed: ${record.title}`;
   const text =
     `This is an automated reminder from Content Compliance Tracker.\n\n` +
-    `"${record.title}" (approval ${record.approval_number ?? 'n/a'}) now needs reapproval.\n\n` +
+    `"${record.title}" (approval ${record.approval_number ?? 'n/a'}, owned by ${record.owner}) now needs reapproval.\n\n` +
     `${sentence}\n\n` +
     `Expiration date: ${record.expiration_date ?? 'n/a'}\n\n` +
     `View this record: ${appUrl}/records/${record.id}\n\n` +
@@ -94,6 +98,7 @@ async function sendReminderEmail(to: string, subject: string, text: string) {
 
 export async function GET(request: NextRequest) {
   const appUrl = new URL(request.url).origin;
+  const teamLeadEmail = process.env.TEAM_LEAD_EMAIL;
 
   const thirtyDaysFromNow = new Date();
   thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
@@ -104,7 +109,7 @@ export async function GET(request: NextRequest) {
     .update({ status: 'Needs reapproval' })
     .lte('expiration_date', cutoff)
     .neq('status', 'Needs reapproval')
-    .select('id, title, approval_number, expiration_date, last_validation_outcome, owner_email');
+    .select('id, title, owner, approval_number, expiration_date, last_validation_outcome');
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
@@ -113,15 +118,15 @@ export async function GET(request: NextRequest) {
   const reminders: { id: string; sent: boolean; reason?: string }[] = [];
 
   for (const record of (transitioned ?? []) as TransitionedRecord[]) {
-    if (!record.owner_email) {
-      reminders.push({ id: record.id, sent: false, reason: 'no owner_email on record' });
+    if (!teamLeadEmail) {
+      reminders.push({ id: record.id, sent: false, reason: 'TEAM_LEAD_EMAIL not configured' });
       continue;
     }
 
     try {
       const sentence = await draftReminderSentence(record);
       const { subject, text } = buildReminderEmail(record, sentence, appUrl);
-      await sendReminderEmail(record.owner_email, subject, text);
+      await sendReminderEmail(teamLeadEmail, subject, text);
 
       await supabaseAdmin
         .from('compliance_records')
